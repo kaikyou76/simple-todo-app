@@ -1,4 +1,5 @@
-const BASE_URL = "https://spring-frog-3bdf.kai-kyou.workers.dev/api/todos";
+//const BASE_URL = "https://spring-frog-3bdf.kai-kyou.workers.dev/api/todos";
+const BASE_URL = "https://spring-frog-3bdf.kai-kyou.workers.dev";
 
 export async function getTodos() {
   const res = await fetch(`${BASE_URL}/api/todos`, {
