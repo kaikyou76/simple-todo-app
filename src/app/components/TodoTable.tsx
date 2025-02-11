@@ -1,9 +1,6 @@
 import React from "react";
-import { getTodos } from "../../../lib/api";
 
-const TodoTable = async () => {
-  const todos = await getTodos();
-  console.log(todos);
+const TodoTable = ({todos}:{todos:Todo[]}) => {
   return (
     <table className="w-full border-y-2 border-black" aria-label="タスク一覧表">
       <thead className="border-b border-black/50">
@@ -13,18 +10,12 @@ const TodoTable = async () => {
         </tr>
       </thead>
       <tbody className="text-center">
-        <tr>
-          <td>タスクA</td>
-          <td>タスクAの内容です</td>
+       {todos.map((todo)=>(
+        <tr key={todo.id}>
+          <td>{todo.title}</td>
+          <td>{todo.content}</td>
         </tr>
-        <tr>
-          <td>タスクB</td>
-          <td>タスクBの内容です</td>
-        </tr>
-        <tr>
-          <td>タスクC</td>
-          <td>タスクCの内容です</td>
-        </tr>
+       ))}
       </tbody>
     </table>
   );

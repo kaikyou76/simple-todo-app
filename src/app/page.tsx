@@ -1,10 +1,11 @@
-import Image from "next/image";
 import TodoTable from "./components/TodoTable";
+import { getTodos } from "../../lib/api";
 
-export default function Home() {
+export default async function Home() {
+  const todos = await getTodos();
   return (
     <main className="container mx-auto">
-      <TodoTable />
+      <TodoTable todos={todos}/>
     </main>
   );
 }
