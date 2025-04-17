@@ -1,81 +1,38 @@
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		const url = new URL(request.url);
+import { Hono } from 'hono'
 
-		// オプションリクエスト (プリフライト) に対応
-		if (request.method === 'OPTIONS') {
-			return new Response(null, {
-				status: 204,
-				headers: {
-					"Access-Control-Allow-Origin": "*", // 必要に応じて限定可能
-					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-					"Access-Control-Allow-Headers": "Content-Type",
-				},
-			});
-		}
+import type { D1Database } from '@cloudflare/workers-types';
 
-		let response: Response;
+type Bindings = {
+  DB: D1Database;
+};
 
-		switch (url.pathname) {
-			case '/message':
-				response = new Response('Hello, World!');
-				break;
+const app = new Hono<{Bindings:Bindings}>();
 
-			case '/random':
-				response = new Response(crypto.randomUUID());
-				break;
+// CORS ミドルウェア（オプション対応含む）
+app.use('*', async (c, next) => {//app.use('*')すべてのルート（*）でこのミドルウェアを適用
+	if (c.req.method === 'OPTIONS') {
+		return c.newResponse('', {
+		  status: 204,
+		  headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type',
+		  },
+		})
+	  }
+  await next()
+  c.header('Access-Control-Allow-Origin', '*')
+})
 
-			case '/api/todos':
-				if (request.method === 'POST') {
-					const body = await request.json();
-					response = new Response(JSON.stringify({
-						...body,
-						id: crypto.randomUUID(),
-					}), {
-						status: 201,
-						headers: { "Content-Type": "application/json" },
-					});
+app.get('/api/todos', async (c) => {
+	try {
+	  const { results } = await c.env.DB.prepare('SELECT * FROM todos').all()
+	  return c.json(results)
+	} catch (error) {
+	  console.error('Error fetching todos:', error)
+	  return c.json({ error: 'サーバーエラーが発生しました' }, 500)
+	}
+  })
 
-				} else if (request.method === 'GET') {
-					const todos = [
-						{ id: "1", title: "サンプルTodo", completed: false },
-					];
-					response = new Response(JSON.stringify(todos), {
-						headers: { "Content-Type": "application/json" },
-					});
-
-				} else if (request.method === 'PUT') {
-					const updated = await request.json();
-					response = new Response(JSON.stringify({
-						message: "更新しました（仮）",
-						updated,
-					}), {
-						headers: { "Content-Type": "application/json" },
-					});
-
-				} else if (request.method === 'DELETE') {
-					response = new Response(JSON.stringify({
-						message: "削除しました（仮）",
-					}), {
-						headers: { "Content-Type": "application/json" },
-					});
-
-				} else {
-					response = new Response("Method Not Allowed", { status: 405 });
-				}
-				break;
-
-			default:
-				response = new Response('Not Found', { status: 404 });
-		}
-
-		const newHeaders = new Headers(response.headers);
-		newHeaders.set("Access-Control-Allow-Origin", "*");
-		
-		return new Response(response.body, {
-		  status: response.status,
-		  statusText: response.statusText,
-		  headers: newHeaders,
-		});
-	},
-} satisfies ExportedHandler<Env>;
+export default app
+  

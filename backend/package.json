@@ -17,6 +17,7 @@
 		"wrangler": "^4.10.0"
 	},
 	"dependencies": {
-		"backend": "file:"
+		"backend": "file:",
+		"hono": "^4.7.6"
 	}
 }
